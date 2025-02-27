@@ -1,0 +1,100 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Transfer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-inline-size: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-container {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            inline-size: 100%;
+            block-size: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress {
+            inline-size: 0%;
+            block-size: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease-in-out;
+        }
+        #downloadLink {
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>Secure File Transfer</h1>
+    
+    <div class="upload-container">
+        <h2>Upload File</h2>
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">Upload</button>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+        </div>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const progressBar = document.getElementById('progressBar');
+            const progress = document.getElementById('progress');
+            const result = document.getElementById('result');
+
+            if (!fileInput.files.length) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            progressBar.style.display = 'block';
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                result.innerHTML = `
+                    <h3>File uploaded successfully!</h3>
+                    <p>Download link (valid for 7 days):</p>
+                    <p id="downloadLink">
+                        <a href="${data.download_link}">${window.location.origin}${data.download_link}</a>
+                    </p>
+                `;
+            })
+            .catch(error => {
+                result.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            })
+            .finally(() => {
+                progressBar.style.display = 'none';
+                progress.style.width = '0%';
+            });
+        }
+    </script>
+</body>
+</html>
